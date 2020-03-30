@@ -41,7 +41,7 @@
     <th><b>Name</b></th>
     <th><b>Password</b></th>
     <th><b>Money</b></th>
-    <th><b>Action</b></th>
+    <th><b>DeleteAction</b></th>
   </tr>
   <tr>
     <td><%= users.getId() %></td>

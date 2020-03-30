@@ -1,78 +1,60 @@
 package service;
 
-import dao.*;
 import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import dao.UserHibernateDAO;
 import model.User;
+import org.hibernate.SessionFactory;
+import util.DBHelper;
 
 public class UserService {
 
-    public void addUser(User user) throws SQLException {
-        getBankClientDAO().addUser(user);
+    private static UserService userService;
+
+    private SessionFactory sessionFactory;
+
+    public UserService(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
-    public void checkUser(User user) throws SQLException {
-        getBankClientDAO().checkUser(user);
+    public static UserService getInstance() {
+        if (userService == null) {
+            userService = new UserService(DBHelper.getSessionFactory());
+        }
+        return userService;
     }
 
-    public void deleteUser(Long id) throws SQLException {
-        getBankClientDAO().deleteUser(id);
+    public void addUser(User user) {
+        if(checkUser(user)) {
+            new UserHibernateDAO(sessionFactory.openSession()).addUser(user);
+        } else {
+            userService.update(user);
+        }
     }
 
-    public void updateUser(User user) throws SQLException {
-        getBankClientDAO().updateUser(user);
+    public void update(User user) {
+        new UserHibernateDAO(sessionFactory.openSession()).update(user);
     }
 
-    public ArrayList<User> getAllUsers() throws SQLException {
-        return getBankClientDAO().getAllUsers();
-    }
-
-    public User getUserById(Long id) throws SQLException {
-        return getBankClientDAO().getUserById(id);
-    }
-
-    public void createTable() {
-        UserDAO dao = getBankClientDAO();
+    public void deleteUser(Long id) {
         try {
-            dao.createTable();
+            new UserHibernateDAO(sessionFactory.openSession()).deleteUser(id);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private static Connection getMysqlConnection() {
-        try {
-            DriverManager.registerDriver((Driver) Class.forName("com.mysql.jdbc.Driver").newInstance());
-
-            StringBuilder url = new StringBuilder();
-
-            url.
-                    append("jdbc:mysql://").        //db type
-                    append("localhost:").           //host name
-                    append("3306/").                //port
-                    append("web5?").          //db name
-                    append("user=root&").          //login
-                    append("password=Qwerty12").       //password
-                    append("&serverTimezone=UTC").
-                    append("&useSSL=false");
-
-            System.out.println("URL: " + url + "\n");
-
-
-            Connection connection = DriverManager.getConnection(url.toString());
-            return connection;
-        } catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new IllegalStateException();
-        }
+    public List<User> getAllUsers() {
+        return new UserHibernateDAO(sessionFactory.openSession()).getAllUsers();
     }
 
-    private static UserDAO getBankClientDAO() {
-        return new UserDAO(getMysqlConnection());
+    public boolean checkUser(User user) {
+        return new UserHibernateDAO(sessionFactory.openSession()).checkUser(user);
     }
 
 }
